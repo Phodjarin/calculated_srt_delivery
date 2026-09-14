@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบคำนวณค่าส่งพัสดุและรถจักรยานยนต์ - สถานีชุมทางบางซื่อ</title>
+    <style>
+        :root {
+            --primary-color: #8B0000;
+            --primary-hover: #660000;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1a202c;
+            --border-color: #cbd5e1;
+            --accent-bg: #fff5f5;
+            --accent-border: #fca5a5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 16px;
+            font-size: 18px; /* ขยายขนาดพื้นฐาน */
+        }
+
+        .calculator-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+            width: 100%;
+            max-width: 650px;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            margin-top: 10px;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 28px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .header p {
+            font-size: 1.15rem;
+            opacity: 0.95;
+        }
+
+        .form-container {
+            padding: 24px 20px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: #0f172a;
+        }
+
+        /* Radio Option Grid สำหรับผู้สูงอายุเลือกง่ายๆ */
+        .option-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .option-card {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            background-color: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary-color);
+            background-color: #fff;
+        }
+
+        .option-card input[type="radio"] {
+            width: 24px;
+            height: 24px;
+            margin-right: 14px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .option-card span {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1.15rem;
+            color: var(--text-color);
+            background-color: #fff;
+        }
+
+        input[readonly] {
+            background-color: #e2e8f0;
+            color: #334155;
+            font-weight: 700;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(139, 0, 0, 0.2);
+        }
+
+        /* ปุ่มทางลัดเลือกสถานียอดนิยม */
+        .quick-stations {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-btn {
+            background-color: #e2e8f0;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #1e293b;
+        }
+
+        .quick-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Custom AutoComplete Suggestion Box */
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 2px solid var(--primary-color);
+            border-radius: 0 0 10px 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 14px 16px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .suggestion-item:hover {
+            background-color: var(--accent-bg);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(139, 0, 0, 0.3);
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .result-container {
+            margin-top: 28px;
+            padding: 24px;
+            background-color: var(--accent-bg);
+            border: 2px solid var(--accent-border);
+            border-radius: 12px;
+            display: none;
+        }
+
+        .result-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--accent-border);
+            padding-bottom: 8px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .price-row.total {
+            border-top: 2px dashed #94a3b8;
+            padding-top: 14px;
+            margin-top: 14px;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .note-box {
+            font-size: 1rem;
+            color: #334155;
+            margin-top: 20px;
+            line-height: 1.6;
+            background-color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 6px solid var(--primary-color);
+        }
+
+        .note-box ul {
+            padding-left: 20px;
+            margin-top: 8px;
+        }
+
+        .note-box li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-card">
+    <div class="header">
+        <h1>คำนวณค่าส่งสินค้าทางรถไฟ</h1>
+        <p>ต้นทาง: สถานีชุมทางบางซื่อ</p>
+    </div>
+
+    <div class="form-container">
+        <form id="calcForm" onsubmit="event.preventDefault(); calculateShipping();">
+            
+            <div class="form-group">
+                <label for="originStation">1. สถานีต้นทาง:</label>
+                <input type="text" id="originStation" value="สถานีชุมทางบางซื่อ" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>2. เลือกประเภทสิ่งของที่ต้องการส่ง:</label>
+                <div class="option-grid">
+                    <label class="option-card">
+                        <input type="radio" name="typeRadio" value="motorcycle" checked onclick="selectType('motorcycle')">
+                        <span>🏍️ รถจักรยานยนต์</span>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="typeRadio" value="luggage" onclick="selectType('luggage')">
+                        <span>🧳 สัมภาระเดินทาง (ผู้ส่งนั่งรถไฟไปด้วย)</span>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="typeRadio" value="parcel" onclick="selectType('parcel')">
+                        <span>📦 พัสดุ / กล่องฝากส่ง (ผู้ส่งไม่ได้เดินทาง)</span>
+                    </label>
+                </div>
+                <input type="hidden" id="shippingType" value="motorcycle">
+            </div>
+
+            <!-- ตัวเลือกเฉพาะ: รถจักรยานยนต์ -->
+            <div id="motoGroup">
+                <div class="form-group">
+                    <label for="engineCc">ขนาดเครื่องยนต์ (ซีซี):</label>
+                    <select id="engineCc">
+                        <option value="125">ไม่เกิน 125 ซีซี (รถทั่วไป)</option>
+                        <option value="299">125 - 299 ซีซี</option>
+                        <option value="499">300 - 499 ซีซี</option>
+                        <option value="649">500 - 649 ซีซี</option>
+                        <option value="799">650 - 799 ซีซี</option>
+                        <option value="999">800 - 999 ซีซี</option>
+                        <option value="1000">1,000 ซีซี ขึ้นไป (บิ๊กไบค์)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ตัวเลือกเฉพาะ: สัมภาระผู้โดยสาร -->
+            <div id="luggageGroup" style="display: none;">
+                <div class="form-group">
+                    <label for="ticketClass">ชั้นตั๋วรถไฟของคุณ:</label>
+                    <select id="ticketClass">
+                        <option value="1">ตั๋วชั้น 1 (ฟรี 50 กิโลกรัม)</option>
+                        <option value="2">ตั๋วชั้น 2 (ฟรี 40 กิโลกรัม)</option>
+                        <option value="3" selected>ตั๋วชั้น 3 (ฟรี 30 กิโลกรัม)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="luggageWeight">น้ำหนักสัมภาระทั้งหมด (กิโลกรัม):</label>
+                    <input type="number" id="luggageWeight" placeholder="ระบุตัวเลข เช่น 35" min="1" step="any">
+                </div>
+            </div>
+
+            <!-- ตัวเลือกเฉพาะ: พัสดุฝากส่ง -->
+            <div id="parcelGroup" style="display: none;">
+                <div class="form-group">
+                    <label for="parcelWeight">น้ำหนักกล่อง/พัสดุ (กิโลกรัม):</label>
+                    <input type="number" id="parcelWeight" placeholder="ระบุตัวเลข (คิดขั้นต่ำ 20 กก.)" min="1" step="any">
+                </div>
+            </div>
+
+            <!-- เลือกสถานีปลายทาง -->
+            <div class="form-group">
+                <label for="destinationInput">3. พิมพ์ชื่อสถานีปลายทาง:</label>
+                <input type="text" id="destinationInput" placeholder="พิมพ์ชื่อจังหวัดหรือสถานี เช่น เชียงใหม่" autocomplete="off" oninput="filterStations()" onfocus="filterStations()" required>
+                
+                <!-- ปุ่มกดลัดยอดนิยม -->
+                <div class="quick-stations">
+                    <span style="font-size: 0.95rem; color: #64748b; align-self: center;">หรือกดเลือก:</span>
+                    <button type="button" class="quick-btn" onclick="quickSelect('เชียงใหม่ (751 กม.)')">เชียงใหม่</button>
+                    <button type="button" class="quick-btn" onclick="quickSelect('ขอนแก่น (450 กม.)')">ขอนแก่น</button>
+                    <button type="button" class="quick-btn" onclick="quickSelect('อุบลราชธานี (575 กม.)')">อุบลราชธานี</button>
+                    <button type="button" class="quick-btn" onclick="quickSelect('ชท.หาดใหญ่ (945 กม.)')">หาดใหญ่</button>
+                </div>
+
+                <div id="suggestionsBox" class="suggestions-list"></div>
+            </div>
+
+            <button type="submit" class="btn-submit">🔍 คำนวณราคาประเมิน</button>
+        </form>
+
+        <div id="result" class="result-container">
+            <div class="result-title" id="resultTitle">สรุปรายการค่าใช้จ่าย</div>
+            <div class="price-breakdown" id="priceDetails"></div>
+            <div class="note-box" id="noteBox">
+                <strong>📌 ข้อควรรู้ในการส่งสินค้า:</strong>
+                <ul id="noteList"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ฐานข้อมูลสถานีปลายทาง
+    const stationsData = [
+        { name: "ดอนเมือง (22 กม.)", rate: 14.00, dist: 22, line: "สายเหนือ" },
+        { name: "รังสิต (28 กม.)", rate: 18.00, dist: 28, line: "สายเหนือ" },
+        { name: "อยุธยา (71 กม.)", rate: 35.20, dist: 71, line: "สายเหนือ" },
+        { name: "ลพบุรี (133 กม.)", rate: 63.60, dist: 133, line: "สายเหนือ" },
+        { name: "นครสวรรค์ (246 กม.)", rate: 107.60, dist: 246, line: "สายเหนือ" },
+        { name: "พิษณุโลก (389 กม.)", rate: 160.00, dist: 389, line: "สายเหนือ" },
+        { name: "ลำปาง (642 กม.)", rate: 253.00, dist: 642, line: "สายเหนือ" },
+        { name: "เชียงใหม่ (751 กม.)", rate: 287.40, dist: 751, line: "สายเหนือ" },
+        { name: "นครปฐม (64 กม.)", rate: 30.40, dist: 64, line: "สายใต้" },
+        { name: "ราชบุรี (117 กม.)", rate: 55.20, dist: 117, line: "สายใต้" },
+        { name: "หัวหิน (229 กม.)", rate: 100.20, dist: 229, line: "สายใต้" },
+        { name: "ชุมพร (485 กม.)", rate: 194.60, dist: 485, line: "สายใต้" },
+        { name: "สุราษฎร์ธานี (651 กม.)", rate: 253.00, dist: 651, line: "สายใต้" },
+        { name: "ตรัง (845 กม.)", rate: 321.60, dist: 845, line: "สายใต้" },
+        { name: "ชท.หาดใหญ่ (945 กม.)", rate: 356.00, dist: 945, line: "สายใต้" },
+        { name: "นครราชสีมา (264 กม.)", rate: 115.20, dist: 264, line: "สายอุบลราชธานี" },
+        { name: "บุรีรัมย์ (376 กม.)", rate: 156.40, dist: 376, line: "สายอุบลราชธานี" },
+        { name: "สุรินทร์ (420 กม.)", rate: 170.60, dist: 420, line: "สายอุบลราชธานี" },
+        { name: "อุบลราชธานี (575 กม.)", rate: 225.60, dist: 575, line: "สายอุบลราชธานี" },
+        { name: "ขอนแก่น (450 กม.)", rate: 181.00, dist: 450, line: "สายหนองคาย" },
+        { name: "อุดรธานี (569 กม.)", rate: 225.60, dist: 569, line: "สายหนองคาย" },
+        { name: "หนองคาย (621 กม.)", rate: 246.20, dist: 621, line: "สายหนองคาย" },
+        { name: "ฉะเชิงเทรา (61 กม.)", rate: 30.40, dist: 61, line: "สายตะวันออก" },
+        { name: "อรัญประเทศ (255 กม.)", rate: 111.40, dist: 255, line: "สายตะวันออก" }
+    ];
+
+    let selectedStationObj = null;
+
+    function selectType(val) {
+        document.getElementById('shippingType').value = val;
+        document.getElementById('motoGroup').style.display = (val === 'motorcycle') ? 'block' : 'none';
+        document.getElementById('luggageGroup').style.display = (val === 'luggage') ? 'block' : 'none';
+        document.getElementById('parcelGroup').style.display = (val === 'parcel') ? 'block' : 'none';
+        document.getElementById('result').style.display = 'none';
+    }
+
+    function quickSelect(stationName) {
+        const input = document.getElementById('destinationInput');
+        input.value = stationName;
+        selectedStationObj = stationsData.find(st => st.name === stationName);
+        document.getElementById('suggestionsBox').style.display = 'none';
+    }
+
+    function filterStations() {
+        const input = document.getElementById('destinationInput');
+        const box = document.getElementById('suggestionsBox');
+        const query = input.value.trim().toLowerCase();
+
+        box.innerHTML = '';
+        selectedStationObj = null;
+
+        if (!query) {
+            box.style.display = 'none';
+            return;
+        }
+
+        const filtered = stationsData.filter(st => st.name.toLowerCase().includes(query) || st.line.toLowerCase().includes(query));
+
+        if (filtered.length === 0) {
+            box.style.display = 'block';
+            box.innerHTML = <div class="suggestion-item" style="color: #94a3b8;">ไม่พบชื่อสถานีนี้...</div>;
+            return;
+        }
+
+        filtered.forEach(st => {
+            const item = document.createElement('div');
+            item.className = 'suggestion-item';
+            item.innerHTML = <span>${st.name}</span> <small style="color:#64748b;">${st.line}</small>;
+            item.onclick = function () {
+                input.value = st.name;
+                selectedStationObj = st;
+                box.style.display = 'none';
+            };
+            box.appendChild(item);
+        });
+
+        box.style.display = 'block';
+    }
+
+    document.addEventListener('click', function(e) {
+        const input = document.getElementById('destinationInput');
+        const box = document.getElementById('suggestionsBox');
+        if (e.target !== input && !box.contains(e.target)) {
+            box.style.display = 'none';
+        }
+    });
+
+    function calculateShipping() {
+        const inputVal = document.getElementById('destinationInput').value.trim();
+
+        if (!selectedStationObj) {
+            selectedStationObj = stationsData.find(st => st.name.toLowerCase() === inputVal.toLowerCase());
+        }
+
+        if (!selectedStationObj) {
+            alert('กรุณากดเลือกสถานีปลายทางจากรายการที่ขึ้นมาแนะนำ');
+            document.getElementById('destinationInput').focus();
+            return;
+        }
+
+        const rawBaseFreightRate = selectedStationObj.rate;
+        const baseFreightRate = Math.ceil(rawBaseFreightRate / 2) * 2;
+        const distance = selectedStationObj.dist;
+        const destName = selectedStationObj.name;
+        const type = document.getElementById('shippingType').value;
+
+        let detailsHtml = '';
+        let notesHtml = '';
+        let total = 0;
+
+        if (type === 'motorcycle') {
+            const engineCc = parseInt(document.getElementById('engineCc').value);
+            let fee = 0, loadUp = 0, loadDown = 0;
+
+            if (engineCc <= 125) {
+                fee = distance <= 300 ? 400 : (distance <= 600 ? 600 : 800);
+                loadUp = 100; loadDown = 60;
+            } else if (engineCc <= 299) {
+                fee = distance <= 300 ? 500 : (distance <= 600 ? 700 : 900);
+                loadUp = 120; loadDown = 80;
+            } else if (engineCc <= 499) {
+                fee = distance <= 300 ? 600 : (distance <= 600 ? 800 : 1000);
+                loadUp = 140; loadDown = 100;
+            } else if (engineCc <= 649) {
+                fee = distance <= 300 ? 700 : (distance <= 600 ? 900 : 1100);
+                loadUp = 160; loadDown = 120;
+            } else if (engineCc <= 799) {
+                fee = distance <= 300 ? 800 : (distance <= 600 ? 1000 : 1200);
+                loadUp = 180; loadDown = 140;
+            } else if (engineCc <= 999) {
+                fee = distance <= 300 ? 900 : (distance <= 600 ? 1100 : 1300);
+                loadUp = 200; loadDown = 160;
+            } else {
+                fee = distance <= 300 ? 1000 : (distance <= 600 ? 1200 : 1400);
+                loadUp = 220; loadDown = 180;
+            }
+
+            const motoFreight = baseFreightRate * 2;
+            total = fee + loadUp + loadDown + motoFreight;
+
+            detailsHtml = `
+                <div class="price-row"><span>สถานีปลายทาง:</span><span><strong>${destName}</strong></span></div>
+                <div class="price-row"><span>ค่าธรรมเนียมรถ:</span><span>${fee.toLocaleString()} บาท</span></div>
+                <div class="price-row"><span>ค่า ยกรถขึ้น (บางซื่อ):</span><span>${loadUp.toLocaleString()} บาท</span></div>
+                <div class="price-row"><span>ค่า ยกรถลง (ปลายทาง):</span><span>${loadDown.toLocaleString()} บาท</span></div>
+                <div class="price-row"><span>ค่าขนส่งทางรถไฟ:</span><span>${motoFreight.toFixed(2)} บาท</span></div>
+                <div class="price-row total"><span>ราคารวมทั้งหมด:</span><span>${total.toFixed(2)} บาท</span></div>
+            `;
+            notesHtml = `
+                <li>ต้องนำ <strong>สำเนาเล่มทะเบียนรถ</strong> และ <strong>สำเนาบัตรประชาชน</strong> มายื่นที่สถานีด้วย</li>
+                <li>ติดต่อส่งรถได้ที่ ห้องรับส่งสินค้า สถานีชุมทางบางซื่อ</li>
+            `;
+        } else if (type === 'luggage') {
+            const luggageInput = document.getElementById('luggageWeight');
+            const totalWeight = parseFloat(luggageInput.value.trim());
+
+            if (isNaN(totalWeight) || totalWeight <= 0) {
+                alert('กรุณากรอกน้ำหนักสัมภาระเป็นตัวเลข');
+                luggageInput.focus();
+                return;
+            }
+
+            const ticketClass = parseInt(document.getElementById('ticketClass').value);
+            const freeAllowance = (ticketClass === 1) ? 50 : (ticketClass === 2 ? 40 : 30);
+            const excessWeight = Math.max(0, totalWeight - freeAllowance);
+            
+            let calcExcessWeight = 0;
+            let freight = 0;
+
+            if (excessWeight > 0) {
+                calcExcessWeight = Math.max(Math.ceil(excessWeight / 10) * 10, 10);
+                freight = (baseFreightRate * calcExcessWeight) / 100;
+            }
+
+            total = freight;
+
+            detailsHtml = `
+                <div class="price-row"><span>สถานีปลายทาง:</span><span><strong>${destName}</strong></span></div>
+                <div class="price-row"><span>น้ำหนักชั่งได้:</span><span>${totalWeight} กก.</span></div>
+                <div class="price-row"><span>สิทธิ์ฟรี (ตั๋วชั้น ${ticketClass}):</span><span>-${freeAllowance} กก.</span></div>
+                <div class="price-row"><span>น้ำหนักส่วนเกินที่ต้องจ่าย:</span><span>${calcExcessWeight} กก.</span></div>
+                <div class="price-row total"><span>ราคารวมทั้งหมด:</span><span>${total.toFixed(2)} บาท</span></div>
+            `;
+            notesHtml = `
+                <li>ส่วนที่ไม่เกินสิทธิ์ฟรี ไม่ต้องเสียเงินเพิ่ม</li>
+                <li>สำหรับผู้โดยสารที่ขึ้นรถไฟ ณ สถานีชุมทางบางซื่อ เท่านั้น</li>
+            `;
+        } else if (type === 'parcel') {
+            const parcelInput = document.getElementById('parcelWeight');
+            const rawWeight = parseFloat(parcelInput.value.trim());
+
+            if (isNaN(rawWeight) || rawWeight <= 0) {
+                alert('กรุณากรอกน้ำหนักพัสดุเป็นตัวเลข');
+                parcelInput.focus();
+                return;
+            }
+
+            const calcWeight = Math.max(Math.ceil(rawWeight / 10) * 10, 20);
+            let calculatedFreight = (baseFreightRate * calcWeight) / 100;
+            let freight = Math.max(calculatedFreight, 60);
+
+            total = freight;
+
+            detailsHtml = `
+                <div class="price-row"><span>สถานีปลายทาง:</span><span><strong>${destName}</strong></span></div>
+                <div class="price-row"><span>น้ำหนักชั่งได้:</span><span>${rawWeight} กก.</span></div>
+                <div class="price-row"><span>คิดน้ำหนักขั้นต่ำที่:</span><span>${calcWeight} กก.</span></div>
+                <div class="price-row total"><span>ราคารวมทั้งหมด:</span><span>${total.toFixed(2)} บาท</span></div>
+            `;
+            notesHtml = `
+                <li>คิดน้ำหนักฝากส่งขั้นต่ำที่ 20 กิโลกรัม</li>
+                <li>ค่าส่งขั้นต่ำอยู่ที่ 60 บาทต่อชิ้น</li>
+            `;
+        }
+
+        document.getElementById('priceDetails').innerHTML = detailsHtml;
+        document.getElementById('noteList').innerHTML = notesHtml;
+        document.getElementById('result').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
